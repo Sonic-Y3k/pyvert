@@ -1,4 +1,13 @@
-def test():
-    """
-    """
-    return "Hi"
+SYS_ENCODING = None
+QUIET = None
+VERBOSE = None
+CONFIG_DIR = None
+DATA_DIR = None
+FULL_PATH = None
+PROG_DIR = None
+LOG_DIR = None
+CONFIG = None
+COMMITS_BEHIND = 0
+CURRENT_VERSION = None
+CURRENT_VERSION = None
+LATEST_VERSION = None
