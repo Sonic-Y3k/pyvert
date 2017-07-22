@@ -2,9 +2,9 @@ import json
 
 
 class Config():
-    TEST = "abc"
-    ABCD = ['a', 'b', 'c', 1]
-    DEFG = {'a': 2}
+    VALID_FILE_EXTENSIONS = ['.mkv']
+    SCAN_DIRECTORY = '/Users/tschoenbach/Downloads/test'
+    OUTPUT_DIRECTORY = '/tmp/output'
 
     def __init__(self):
         """
@@ -32,4 +32,5 @@ class Config():
         """
         """
         file_handler = open(conf_file, 'w')
-        json.dump(self.get_all_variables(), file_handler)
+        json.dump(self.get_all_variables(), file_handler, indent=4,
+                  sort_keys=True)

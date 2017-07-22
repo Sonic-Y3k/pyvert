@@ -3,12 +3,20 @@ import sys
 import locale
 import platform
 import argparse
+import signal
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'libs/'))
 
 import pyvert
 from pyvert import logger, version, versioncheck
 from pyvert.config import Config
+
+
+# register signals
+signal.signal(signal.SIGINT, pyvert.sig_handler)
+signal.signal(signal.SIGTERM, pyvert.sig_handler)
+
 
 def parse_arguments():
     """
@@ -127,6 +135,28 @@ def main():
     pyvert.CURRENT_VERSION = versioncheck.get_local_version()[0]
 
     versioncheck.get_remote_version()
+
+    pyvert.start()
+
+    # run endlessly until a signal apperars
+    while True:
+        if not pyvert.SIGNAL:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                pyvert.SIGNAL = 'shutdown'
+        else:
+            logger.info('Received signal: {}'.format(pyvert.SIGNAL))
+
+            if pyvert.SIGNAL == 'shutdown':
+                pyvert.shutdown()
+            elif pyvert.SIGNAL == 'restart':
+                pyvert.shutdown(restart=True)
+            else:
+                pyvert.shutdown(restart=True, update=True)
+
+            pyvert.SIGNAL = None
+
 
 if __name__ == "__main__":
     main()

@@ -1,1 +1,7 @@
-{"ABCD": ["a", "b", "c", 1], "DEFG": {"a": 2}, "TEST": "abc"}
+{
+    "OUTPUT_DIRECTORY": "/tmp/output",
+    "SCAN_DIRECTORY": "/Users/tschoenbach/Downloads/test",
+    "VALID_FILE_EXTENSIONS": [
+        ".mkv"
+    ]
+}

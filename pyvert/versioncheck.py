@@ -116,8 +116,6 @@ def get_remote_version():
     commits = requests.get(url)
     commits_json = json.loads(commits.text)
 
-    print(url)
-
     if commits is None:
         logger.warn('Could not get commits behind from GitHub.')
         return pyvert.LATEST_VERSION
