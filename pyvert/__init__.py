@@ -35,8 +35,8 @@ def initialize_scheduler():
         schedule_job(QUEUE.scan, 'Scan files', hours=0, minutes=1,
                      seconds=0, args=[CONFIG.SCAN_DIRECTORY])
 
-        schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
-                     seconds=30)
+        # schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
+        #             seconds=30)
 
         schedule_job(QUEUE.clean_ignore_list, 'Clean ignore list.',
                      hours=0, minutes=0, seconds=20)
@@ -46,7 +46,7 @@ def initialize_scheduler():
             try:
                 SCHED.start()
             except Exception as e:
-                looger.error(e)        
+                logger.error(e)
 
 
 def schedule_job(function, name, hours=0, minutes=0, seconds=0, args=None):

@@ -96,8 +96,8 @@ class Queue():
                    self.scan_output_directory(temp_fullpath) and \
                    self.scan_size(temp_fullpath):
                     temp_file = None
-                    logger.debug('Trying to construct queue element ' +
-                                 'for \'{}\''.format(temp_fullpath))
+                    logger.debug('Adding \'{0}\''.format(
+                                 path.basename(temp_fullpath)))
                     temp_file = queue_element.QueueElement(temp_fullpath)
                     with queue_lock:
                         self.queue.append(temp_file)

@@ -9,7 +9,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'libs/'))
 
 import pyvert
-from pyvert import logger, version, versioncheck
+from pyvert import logger, version, versioncheck, webstart
 from pyvert.config import Config
 
 
@@ -128,15 +128,30 @@ def main():
     logger.debug('')
 
     pyvert.CONFIG = Config()
+    if os.path.exists(os.path.join(
+       pyvert.DATA_DIR, 'config.json')):
+        pyvert.CONFIG.load_config_file(os.path.join(
+            pyvert.DATA_DIR, 'config.json'))
     print(pyvert.CONFIG.get_all_variables())
-    pyvert.CONFIG.save_config_file(os.path.join(pyvert.DATA_DIR, 'config.json'))
-    pyvert.CONFIG.load_config_file(os.path.join(pyvert.DATA_DIR, 'config.json'))
 
     pyvert.CURRENT_VERSION = versioncheck.get_local_version()[0]
 
     versioncheck.get_remote_version()
 
     pyvert.start()
+
+    web_config = {
+        'http_port': pyvert.CONFIG.HTTP_PORT,
+        'http_host': pyvert.CONFIG.HTTP_HOST,
+        'http_root': pyvert.CONFIG.HTTP_ROOT,
+        'enable_https': False,
+        'https_cert': '',
+        'https_key': '',
+        'http_environment': '',
+    }
+
+    # start webinterface
+    webstart.initialize(web_config)
 
     # run endlessly until a signal apperars
     while True:
