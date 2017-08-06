@@ -500,8 +500,8 @@ class FFMpeg(object):
         yielded = False
         buf = []
         total_output = []
-        pat = re.compile(r'time=([0-9.:]+)')
-
+        # pat = re.compile(r'time=([0-9.:]+)')
+        pat = re.compile(r'frame= *([0-9]+) *fps=([0-9]+).*time=([0-9.:]+).*speed=([0-9.]+).*')
         while True:
             if timeout:
                 try:
@@ -535,9 +535,8 @@ class FFMpeg(object):
                 buf = [buf]
                 tmp = pat.search(line)
                 if tmp:
-                    timecode = timecode_to_seconds(tmp.group(1))
                     yielded = True
-                    yield timecode
+                    yield tmp
 
         total_output = ''.join(total_output)
         try:
@@ -548,9 +547,8 @@ class FFMpeg(object):
             # There may have been a single time, check it
             tmp = pat.search(total_output)
             if tmp:
-                timecode = timecode_to_seconds(tmp.group(1))
                 yielded = True
-                yield timecode
+                yield tmp
 
         if timeout:
             try:
@@ -640,15 +638,20 @@ class FFMpeg(object):
 
         for data in self.convert(infile, '/dev/null',
                                  opts, timeout, nice=nice, get_output=True):
-            if isinstance(data, float):
-                yield data
+            try:
+                tt = timecode_to_seconds(data.group(3))
+            except AttributeError:
+                tt = data
+
+            if isinstance(tt, float):
+                yield tt
             else:
                 interlace = None
                 adjustement = None
                 crop_size = None
 
                 if audio_level:
-                    match = re.search('Integrated loudness:\s+I:\s+(-?\d+\.\d)\s+LUFS(?s).+True peak:\s+Peak:\s+(-?\d+\.\d)\s+dBFS', data, re.UNICODE)
+                    match = re.search('Integrated loudness:\s+I:\s+(-?\d+\.\d)\s+LUFS(?s).+True peak:\s+Peak:\s+(-?\d+\.\d)\s+dBFS', tt, re.UNICODE)
                     if match is None:
                         adjustement = 'noise'
                     else:
@@ -674,7 +677,7 @@ class FFMpeg(object):
                                 adjustement = 0
 
                 if interlacing:
-                    match = re.search('Multi frame detection:\s*TFF:\s*(\d+)\s*BFF:\s*(\d+)\s*Progressive:\s*(\d+)\s*Undetermined:\s*(\d+)', data, re.UNICODE)
+                    match = re.search('Multi frame detection:\s*TFF:\s*(\d+)\s*BFF:\s*(\d+)\s*Progressive:\s*(\d+)\s*Undetermined:\s*(\d+)', tt, re.UNICODE)
                     if match is None:
                         raise FFMpegConvertError(
                             'No interlaced data.',

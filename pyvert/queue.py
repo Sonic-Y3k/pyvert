@@ -181,6 +181,6 @@ class Queue():
                 element = self.get(idx)
                 for i in element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY):
                     with queue_lock:
-                        logger.debug('Status: {}'.format(float(i)))
-                        self.modify(idx, 'PERCENT', float(i))
+                        logger.debug('Status: {}'.format(i))
+                        # self.modify(idx, 'PERCENT', float(i))
                 self.active -= 1
