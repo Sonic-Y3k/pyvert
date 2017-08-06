@@ -638,20 +638,15 @@ class FFMpeg(object):
 
         for data in self.convert(infile, '/dev/null',
                                  opts, timeout, nice=nice, get_output=True):
-            try:
-                tt = timecode_to_seconds(data.group(3))
-            except AttributeError:
-                tt = data
-
-            if isinstance(tt, float):
-                yield tt
+            if 'sre' in str(type(data)):
+                yield data
             else:
                 interlace = None
                 adjustement = None
                 crop_size = None
 
                 if audio_level:
-                    match = re.search('Integrated loudness:\s+I:\s+(-?\d+\.\d)\s+LUFS(?s).+True peak:\s+Peak:\s+(-?\d+\.\d)\s+dBFS', tt, re.UNICODE)
+                    match = re.search('Integrated loudness:\s+I:\s+(-?\d+\.\d)\s+LUFS(?s).+True peak:\s+Peak:\s+(-?\d+\.\d)\s+dBFS', data, re.UNICODE)
                     if match is None:
                         adjustement = 'noise'
                     else:
@@ -677,7 +672,7 @@ class FFMpeg(object):
                                 adjustement = 0
 
                 if interlacing:
-                    match = re.search('Multi frame detection:\s*TFF:\s*(\d+)\s*BFF:\s*(\d+)\s*Progressive:\s*(\d+)\s*Undetermined:\s*(\d+)', tt, re.UNICODE)
+                    match = re.search('Multi frame detection:\s*TFF:\s*(\d+)\s*BFF:\s*(\d+)\s*Progressive:\s*(\d+)\s*Undetermined:\s*(\d+)', data, re.UNICODE)
                     if match is None:
                         raise FFMpegConvertError(
                             'No interlaced data.',
