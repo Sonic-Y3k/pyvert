@@ -17,16 +17,17 @@ class Config():
         'rc-lookahead': 32,
         'qmin': 15.0,
         'qmax': 25.0,
-        'pix_fmt': 'yuv444p16le',
+        'pix_fmt': 'yuv420p',
     }
     OUTPUT_FORMAT = 'mkv'
     AUDIO_OPTIONS = {}
     SUBTITLE_OPTIONS = {}
-    HTTP_PORT = 80
+    HTTP_PORT = 8080
     HTTP_HOST = '127.0.0.1'
     HTTP_ROOT = ''
     HTTP_ENVIRONMENT = ''
     INTERFACE = 'default'
+    MMQS = 4000  # max_muxing_queue_size
 
     def __init__(self):
         """

@@ -136,5 +136,6 @@ class QueueElement():
         options['map'] = 0
         if type(pyvert.CONFIG.DECODER) == str:
             options['decoder'] = {'codec': pyvert.CONFIG.DECODER}
+        options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS
 
         return self.COBJECT.convert(infile, outfile, options)
