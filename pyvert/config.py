@@ -28,6 +28,7 @@ class Config():
     HTTP_ENVIRONMENT = ''
     INTERFACE = 'default'
     MMQS = 4000  # max_muxing_queue_size
+    CONCURRENT_JOBS = 2
 
     def __init__(self):
         """

@@ -36,7 +36,7 @@ def initialize_scheduler():
                      seconds=0, args=[CONFIG.SCAN_DIRECTORY])
 
         schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
-                     seconds=30, max_instances=2)
+                     seconds=5, max_instances=pyvert.CONFIG.CONCURRENT_JOBS)
 
         schedule_job(QUEUE.clean_ignore_list, 'Clean ignore list.',
                      hours=0, minutes=0, seconds=20)
@@ -62,7 +62,8 @@ def schedule_job(function, name, hours=0, minutes=0,
         elif job.trigger.interval != datetime.timedelta(hours=hours,
                                                         minutes=minutes):
             SCHED.reschedule_job(name, trigger=IntervalTrigger(
-                hours=hours, minutes=minutes, seconds=seconds), args=args)
+                hours=hours, minutes=minutes, seconds=seconds),
+                max_instances=max_instances, args=args)
             logger.info("Re-scheduled background task: %s", name)
     elif hours > 0 or minutes > 0 or seconds > 0:
         SCHED.add_job(function, id=name, trigger=IntervalTrigger(

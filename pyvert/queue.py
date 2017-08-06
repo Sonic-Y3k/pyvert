@@ -18,7 +18,7 @@ class Queue():
         """
         self.queue = []
         self.ignore = []
-        self.active = False
+        self.active = 0
 
     def gffd(self, directory, recursive=True):
         """ Scans directory for new files
@@ -171,13 +171,16 @@ class Queue():
     def worker(self):
         """ lets work on queue
         """
-        if not self.active:
+        if self.active < pyvert.CONFIG.CONCURRENT_JOBS:
             idx = self.get_next_to_work()
             if idx >= 0:
-                self.active = True
+                with queue_lock:
+                    logger.debug('Setting ID #{} to active'.format(idx))
+                    self.active += 1
+                    self.modify(idx, 'STATUS', 2)
                 element = self.get(idx)
                 for i in element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY):
                     with queue_lock:
                         logger.debug('Status: {}'.format(float(i)))
-                        self.modify(idx, 'STATUS', float(i))
-                self.active = False
+                        self.modify(idx, 'PERCENT', float(i))
+                self.active -= 1
