@@ -36,7 +36,7 @@ def initialize_scheduler():
                      seconds=0, args=[CONFIG.SCAN_DIRECTORY])
 
         schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
-                     seconds=5, max_instances=pyvert.CONFIG.CONCURRENT_JOBS)
+                     seconds=5, max_instances=CONFIG.CONCURRENT_JOBS)
 
         schedule_job(QUEUE.clean_ignore_list, 'Clean ignore list.',
                      hours=0, minutes=0, seconds=20)
