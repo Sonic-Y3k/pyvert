@@ -35,8 +35,8 @@ def initialize_scheduler():
         schedule_job(QUEUE.scan, 'Scan files', hours=0, minutes=1,
                      seconds=0, args=[CONFIG.SCAN_DIRECTORY])
 
-        # schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
-        #             seconds=30)
+        schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
+                     seconds=30, max_instances=2)
 
         schedule_job(QUEUE.clean_ignore_list, 'Clean ignore list.',
                      hours=0, minutes=0, seconds=20)
@@ -49,7 +49,8 @@ def initialize_scheduler():
                 logger.error(e)
 
 
-def schedule_job(function, name, hours=0, minutes=0, seconds=0, args=None):
+def schedule_job(function, name, hours=0, minutes=0,
+                 seconds=0, max_instances=1, args=None):
     """
     """
     job = SCHED.get_job(name)
@@ -65,7 +66,8 @@ def schedule_job(function, name, hours=0, minutes=0, seconds=0, args=None):
             logger.info("Re-scheduled background task: %s", name)
     elif hours > 0 or minutes > 0 or seconds > 0:
         SCHED.add_job(function, id=name, trigger=IntervalTrigger(
-            hours=hours, minutes=minutes, seconds=seconds), args=args)
+            hours=hours, minutes=minutes, seconds=seconds), 
+            max_instances=max_instances, args=args)
         logger.info("Scheduled background task: %s", name)
 
 
