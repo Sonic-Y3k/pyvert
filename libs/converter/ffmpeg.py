@@ -500,8 +500,10 @@ class FFMpeg(object):
         yielded = False
         buf = []
         total_output = []
-        # pat = re.compile(r'time=([0-9.:]+)')
-        pat = re.compile(r'frame= *([0-9]+) *fps=([0-9]+).*time=([0-9.:]+).*speed=([0-9.]+).*')
+        if '/dev/null' in cmds:
+            pat = re.compile(r'time=([0-9.:]+)')
+        else:
+            pat = re.compile(r'frame= *([0-9]+) *fps=([0-9]+).*time=([0-9.:]+).*speed=([0-9.]+).*')
         while True:
             if timeout:
                 try:
@@ -673,6 +675,8 @@ class FFMpeg(object):
 
                 if interlacing:
                     match = re.search('Multi frame detection:\s*TFF:\s*(\d+)\s*BFF:\s*(\d+)\s*Progressive:\s*(\d+)\s*Undetermined:\s*(\d+)', data, re.UNICODE)
+                    print (data)
+                    exit (1)
                     if match is None:
                         raise FFMpegConvertError(
                             'No interlaced data.',
