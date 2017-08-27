@@ -1,5 +1,6 @@
 import uuid
-from converter import Converter, FFMpegConvertError
+from converter import Converter
+from converter.ffmpeg import FFMpegConvertError
 from os.path import join, basename
 from .helper import sizeof_fmt, seconds_hr
 from . import logger
@@ -51,11 +52,12 @@ class QueueElement():
                 pass
 
             self.CROP = a[2]
-        except FFMpegConvertError as e:
-            logger.warning('Analyzing of \'{}\' failed with \'{}\' ' +
-                           'set res to default'.format(self.FULLPATH,
-                                                       e.msg))
-            self.crop_correction()
+        except TypeError as e:
+            logger.warning('Analyze failed in {}'.format(self.FULLPATH) +
+                           ' with {}.'.format(e))
+            self.CROP = '0:0:0:0'
+        
+        self.crop_correction()
 
     def crop_correction(self):
         """
