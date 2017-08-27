@@ -1,5 +1,5 @@
 import uuid
-from converter import Converter
+from converter import Converter, FFMpegConvertError
 from os.path import join, basename
 from .helper import sizeof_fmt, seconds_hr
 from . import logger
@@ -45,11 +45,17 @@ class QueueElement():
     def analyze(self):
         abc = self.COBJECT.analyze(self.FULLPATH, crop=True, audio_level=False,
                                    duration=10, start=30)
-        for a in abc:
-            pass
 
-        self.CROP = a[2]
-        self.crop_correction()
+        try:
+            for a in abc:
+                pass
+
+            self.CROP = a[2]
+        except FFMpegConvertError as e:
+            logger.warning('Analyzing of \'{}\' failed with \'{}\' ' +
+                           'set res to default'.format(self.FULLPATH,
+                                                       e.msg))
+            self.crop_correction()
 
     def crop_correction(self):
         """
@@ -70,6 +76,7 @@ class QueueElement():
                 height = int(stream['height'])
                 break
 
+        logger.debug(' - Cropdetect res: {}'.format(self.CROP))
         if abs(width-4096) < 10 and abs(height-2160) < 10:
             cwidth = 4096
             if crop_array[3] <= 140:
@@ -102,7 +109,7 @@ class QueueElement():
             elif 40 < crop_array[3] < 70:
                 logger.debug(' - Guessed aspect ratio: 2:1')
                 cheight = 960
-            elif 80 < crop_array[3] <= 180:
+            elif 80 < crop_array[3] <= 230:
                 logger.debug(' - Guessed aspect ratio: 2.40:0')
                 cheight = 800
             else:
