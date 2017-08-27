@@ -640,7 +640,8 @@ class FFMpeg(object):
 
         for data in self.convert(infile, '/dev/null',
                                  opts, timeout, nice=nice, get_output=True):
-            if 'sre' in str(type(data)):
+            if 'sre' in str(type(data)) or \
+               isinstance(data, float):
                 yield data
             else:
                 interlace = None
