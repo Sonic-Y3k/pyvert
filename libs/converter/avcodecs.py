@@ -960,10 +960,10 @@ class HEVCNvencCodec(VideoCodec):
                 optlist.extend(['-cq', str(safe['cq'])])
             else:
                 logger.error(str(safe['cq'])+' is not a valid cq for hevc_nvenc encoder ...')
-                optlist.extend(['-cq', '0']
+                optlist.extend(['-cq', '0'])
         if 'aud' in safe:
             if safe['aud'] in [False, True]:
-                optlist.extend(['-aud', str(int(safe['aud'])))
+                optlist.extend(['-aud', str(int(safe['aud']))])
             else:
                 logger.error(str(safe['aud'])+' is not a valid aud for hevc_nvenc encoder ...')
                 optlist.extend(['-aud', '0'])
