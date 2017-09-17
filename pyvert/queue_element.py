@@ -127,6 +127,14 @@ class QueueElement():
                     round(abs(height-cheight)/2))
         logger.debug(' - Set crop to {0}'.format(self.CROP))
 
+    def get_vcodec(self):
+        """
+        """
+        for stream in self.MEDIAINFO['streams']:
+            if stream['codec_type'] == 'video':
+                return '{0}'.format(stream['codec_name'])
+        return 'None'
+
     def convert(self, outdir):
         """
         """
@@ -143,8 +151,10 @@ class QueueElement():
         options['subtitle'] = pyvert.CONFIG.SUBTITLE_OPTIONS
         options['subtitle']['codec'] = pyvert.CONFIG.SUBTITLE_CODEC
         options['map'] = 0
-        if type(pyvert.CONFIG.DECODER) == str:
-            options['decoder'] = {'codec': pyvert.CONFIG.DECODER}
+        vcodec = self.get_vcodec()
+        if pyvert.CONFIG.DECODER in ['cuvid']:
+            if vcodec in ['h264', 'hevc', 'vc1']:
+                options['decoder'] = {'codec': vcodec+'_cuvid'}
         options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS
 
         return self.COBJECT.convert(infile, outfile, options)

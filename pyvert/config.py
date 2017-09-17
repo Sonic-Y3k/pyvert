@@ -9,7 +9,7 @@ class Config():
     AUDIO_CODEC = 'copy'
     SUBTITLE_CODEC = 'copy'
     AUTOCROP = True
-    DECODER = 'h264_cuvid'
+    DECODER = 'cuvid'
     VIDEO_OPTIONS = {
         'profile': 'main10',
         'preset': 'slow',
