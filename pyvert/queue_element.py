@@ -94,10 +94,10 @@ class QueueElement():
                 cheight = 2160
         elif abs(width-3840) < 10 and abs(height-2160) < 10:
             cwidth = 3840
-            if crop_array[3] <= 140:
+            if crop_array[3] <= 120:
                 logger.debug(' - Guessed aspect ratio: 16:9')
                 cheight = 2160
-            elif 140 < crop_array[3] <= 300:
+            elif 120 < crop_array[3] <= 300:
                 logger.debug(' - Guessed aspect ratio: 12:5')
                 cheight = 1600
         elif abs(width-1920) < 10 and abs(height-1080) < 10:
