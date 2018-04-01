@@ -30,13 +30,16 @@ def initialize_scheduler():
         start_jobs = not len(SCHED.get_jobs())
 
         schedule_job(versioncheck.get_remote_version, 'Check GitHub' +
-                     ' for updates', hours=1, minutes=9, seconds=0)
+                     ' for updates', hours=12, minutes=0, seconds=0)
 
         schedule_job(QUEUE.scan, 'Scan files', hours=0, minutes=1,
                      seconds=0, args=[CONFIG.SCAN_DIRECTORY])
 
         schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
-                     seconds=5, max_instances=CONFIG.CONCURRENT_JOBS)
+                     seconds=5, max_instances=CONFIG.CONCURRENT_JOBS+1)
+
+        #schedule_job(QUEUE.watcher, 'Watch progress', hours=0, minutes=1,
+        #             seconds=0)
 
         schedule_job(QUEUE.clean_ignore_list, 'Clean ignore list.',
                      hours=0, minutes=0, seconds=20)

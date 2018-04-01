@@ -40,16 +40,27 @@ class QueueElement():
                      self.MEDIAINFO['format']['size'])))
         logger.debug(' - Duration: {}'.format(seconds_hr(
                      self.MEDIAINFO['format']['duration'])))
+
+        #if ('unknown' not in self.get_video_stream()['color_primaries']):
+        #    logger.debug(' - Has HDR: Yes')
+        #    self.HDR = True
+        #else:
+        #    logger.debug(' - Has HDR: No')
+        #    self.HDR = False
+
         self.analyze()
         self.STATUS = 1
 
     def analyze(self):
         abc = self.COBJECT.analyze(self.FULLPATH, crop=True, audio_level=False,
-                                   duration=10, start=30)
+                                   duration=20, start=60)
 
         try:
             for a in abc:
-                pass
+                try:
+                    logger.debug('Analyze: {0:.2f}%'.format(float(a/20)*100))
+                except TypeError:
+                    pass
 
             self.CROP = a[2]
         except TypeError as e:
@@ -130,31 +141,60 @@ class QueueElement():
     def get_vcodec(self):
         """
         """
+        return '{0}'.format(self.get_video_stream()['codec_name'])
+
+    def get_video_stream(self):
+        """
+        """
         for stream in self.MEDIAINFO['streams']:
             if stream['codec_type'] == 'video':
-                return '{0}'.format(stream['codec_name'])
+                return stream
         return 'None'
+
+    def timecode_to_sec(self, tc):
+        """
+        """
+        if ':' in tc:
+            timecode = 0
+            for part in tc.split(':'):
+               timecode = 60 * timecode + float(part)
+        else:
+            timecode = float(tc)
+        
+        return timecode
 
     def convert(self, outdir):
         """
         """
         infile = self.FULLPATH
-        outfile = join(outdir, basename(infile))
         options = {}
-        options['format'] = pyvert.CONFIG.OUTPUT_FORMAT
-        options['video'] = pyvert.CONFIG.VIDEO_OPTIONS
-        options['video']['codec'] = pyvert.CONFIG.VIDEO_CODEC
-        if pyvert.CONFIG.AUTOCROP:
-            options['video']['crop'] = self.CROP
-        options['audio'] = pyvert.CONFIG.AUDIO_OPTIONS
-        options['audio']['codec'] = pyvert.CONFIG.AUDIO_CODEC
-        options['subtitle'] = pyvert.CONFIG.SUBTITLE_OPTIONS
-        options['subtitle']['codec'] = pyvert.CONFIG.SUBTITLE_CODEC
-        options['map'] = 0
+        #if (self.HDR):
+        if False:
+            outfile = join(outdir, '{0}.{1}'.format(basename(infile), 'hevc'))
+            options['format'] = 'hevc'
+            options['video'] = pyvert.CONFIG.VIDEO_OPTIONS
+            if pyvert.CONFIG.AUTOCROP:
+                options['video']['crop'] = self.CROP
+
+        else:
+            outfile = join(outdir, basename(infile))
+            options['format'] = pyvert.CONFIG.OUTPUT_FORMAT
+            options['video'] = pyvert.CONFIG.VIDEO_OPTIONS
+            options['video']['codec'] = pyvert.CONFIG.VIDEO_CODEC
+            if pyvert.CONFIG.AUTOCROP:
+                options['video']['crop'] = self.CROP
+            options['audio'] = pyvert.CONFIG.AUDIO_OPTIONS
+            options['audio']['codec'] = pyvert.CONFIG.AUDIO_CODEC
+            options['subtitle'] = pyvert.CONFIG.SUBTITLE_OPTIONS
+            options['subtitle']['codec'] = pyvert.CONFIG.SUBTITLE_CODEC
+            options['map'] = 0
         vcodec = self.get_vcodec()
         if pyvert.CONFIG.DECODER in ['cuvid']:
             if vcodec in ['h264', 'hevc', 'vc1']:
                 options['decoder'] = {'codec': vcodec+'_cuvid'}
         options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS
-
-        return self.COBJECT.convert(infile, outfile, options)
+        
+        for i in self.COBJECT.convert(infile, outfile, options):
+            self.PERCENT = float(self.timecode_to_sec(i[2])/self.MEDIAINFO['format']['duration'])*100
+        
+        return True

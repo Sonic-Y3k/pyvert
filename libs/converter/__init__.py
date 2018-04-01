@@ -304,10 +304,11 @@ class Converter(object):
             raise ConverterError('Zero-length media')
         for timecode in self.ffmpeg.analyze(infile, audio_level, interlacing,
                                             crop, start, duration, end, timeout, nice):
-            if isinstance(timecode, float):
-                yield int((100.0 * timecode) / info['format']['duration'])
-            else:
-                yield timecode
+            #if isinstance(timecode, float):
+            #    yield int((100.0 * timecode) / info['format']['duration'])
+            #else:
+            #    yield timecode
+            yield timecode
 
     def probe(self, *args, **kwargs):
         """

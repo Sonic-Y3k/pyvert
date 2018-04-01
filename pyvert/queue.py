@@ -1,8 +1,9 @@
 from threading import RLock
 from os import path, walk, stat
 from time import time
+import re
 import pyvert
-from pyvert import config, logger, queue_element
+from pyvert import config, logger, queue_element, hdr
 from json.decoder import JSONDecodeError
 
 queue_lock = RLock()
@@ -29,8 +30,8 @@ class Queue():
         """
         result = []
         if path.isdir(directory):
-            logger.debug('Starting scan in directory \'{}\''.format(
-                          directory))
+            #logger.debug('Starting scan in directory \'{}\''.format(
+            #              directory))
             for root, directories, filenames in walk(directory):
                 directories.sort()
                 for filename in sorted(filenames):
@@ -84,10 +85,20 @@ class Queue():
                     return index
         return result
 
+    def get_active_idx(self):
+        """
+        """
+        result = []
+        with queue_lock:
+            for index, element in enumerate(self.queue):
+                if element.STATUS == 2:
+                    result.append(index)
+        return result
+
     def scan(self, directory):
         """ Scans directory for new files
         """
-        logger.debug('Starting scan in directory \'{}\''.format(directory))
+        #logger.debug('Starting scan in directory \'{}\''.format(directory))
         filenames = self.gffd(directory)
         for temp_fullpath in filenames:
             try:
@@ -110,8 +121,8 @@ class Queue():
                              'from \'{}\''.format(temp_fullpath))
             finally:
                 """"""
-        logger.debug('Finishing scan in directory \'{}\''.format(
-                     directory))
+        #logger.debug('Finishing scan in directory \'{}\''.format(
+        #             directory))
 
     def scan_time_modified(self, filename, t=30):
         """ Checks if file was at least modified t seconds ago
@@ -155,7 +166,7 @@ class Queue():
     def clean_ignore_list(self):
         """ Remove invalid entries from ignore list
         """
-        logger.debug('Starting cleaning of ignore list')
+        #logger.debug('Starting cleaning of ignore list')
         with queue_lock:
             old_len = len(self.ignore)
             for i in self.ignore:
@@ -166,7 +177,7 @@ class Queue():
             if new_len < old_len:
                 logger.debug('Removed {} items from ignore list.'.format(
                              abs(old_len - new_len)))
-        logger.debug('Finished cleaning of ignore list')
+        #logger.debug('Finished cleaning of ignore list')
 
     def worker(self):
         """ lets work on queue
@@ -179,8 +190,28 @@ class Queue():
                     self.active += 1
                     self.modify(idx, 'STATUS', 2)
                 element = self.get(idx)
-                for i in element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY):
-                    with queue_lock:
-                        logger.debug('Status: {}'.format(i))
-                        # self.modify(idx, 'PERCENT', float(i))
-                self.active -= 1
+                element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY)
+                with queue_lock:
+                    logger.debug('Setting ID #{} to finished'.format(idx))
+                    self.active -= 1
+                    self.modify(idx, 'STATUS', 3)
+                    
+                # self.modify(idx, 'PERCENT', float(i))
+                #self.active += 5
+                #if element.HDR:
+                    #hoptions = {
+                    #    'MAXCLL': '1000,0',
+                    #    'COLORPRIM': 'bt2020',
+                    #    'TRANSFER': 'smpte-st-2084',
+                    #    'COLORMATRIX': 'bt2020nc',
+                    #    'CHROMALOC': 2,
+                    #    'VIDEOFORMAT': 'unspec',
+                    #    'FULL_RANGE': 'tv',
+                    #    'MASTERDP': 'G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)',
+                    #}
+                    #test = hdr.HdrPatcher('/mnt/Wastelands/Downloads/ToConvert/test.hevc', '/mnt/Wastelands/Downloads/ToConvert/out.hevc', hoptions)
+                    #test.process()
+        
+        for i in self.get_active_idx():
+            cutted_percent = "{0:.2f}".format(self.get(i).PERCENT)
+            logger.debug('[{}] Progress: {}%'.format(i, cutted_percent))
