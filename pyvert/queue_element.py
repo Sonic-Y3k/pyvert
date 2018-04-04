@@ -187,7 +187,11 @@ class QueueElement():
             options['audio']['codec'] = pyvert.CONFIG.AUDIO_CODEC
             options['subtitle'] = pyvert.CONFIG.SUBTITLE_OPTIONS
             options['subtitle']['codec'] = pyvert.CONFIG.SUBTITLE_CODEC
-            options['map'] = 0
+            options['map'] = []
+            for stream in self.MEDIAINFO['streams']:
+                if stream['codec_name'] not in' mjpeg':
+                    options['map'].append(int(stream['index']))
+
         vcodec = self.get_vcodec()
         if pyvert.CONFIG.DECODER in ['cuvid']:
             if vcodec in ['h264', 'hevc', 'vc1']:
