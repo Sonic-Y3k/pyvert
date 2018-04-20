@@ -659,18 +659,18 @@ class H264VaapiCodec(VideoCodec):
                 optlist.extend(['-qp', 20])
         if 'quality' in safe:
             if 0 <= safe['quality'] <= 8:
-                optlist.extend(['-quality', safe['quality'])
+                optlist.extend(['-quality', safe['quality']])
             else:
                 logger.error('Encode quality invalid ({}). Reverting to default (0)...'.format(safe['quality']))
                 optlist.extend(['-quality', 0)
         if 'low_power' in safe:
             if safe['low_power'] in [0, 1]:
-                optlist.extend(['-low_power', safe['low_power'])
+                optlist.extend(['-low_power', safe['low_power']])
             else:
                 logger.error('Invalid low_power ({})'.format(safe['low_power']))
         if 'coder' in safe:
             if safe['coder'] in [0, 1]:
-                optlist.extend(['-coder', safe['coder'])
+                optlist.extend(['-coder', safe['coder']])
             else:
                 logger.error('Invalid coder ({})'.format(safe['coder']))
         
