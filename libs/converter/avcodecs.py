@@ -701,7 +701,7 @@ class HevcVaapiCodec(VideoCodec):
                 
         if 'vprofile' in safe:
             if safe['vprofile'] in [2]:
-                optlist.extend(['-profile', safe['vprofile']])
+                optlist.extend(['-profile:v', safe['vprofile']])
             else:
                 logger.error('Profile ({}) invalid.'.format(safe['vprofile']))
         return optlist
