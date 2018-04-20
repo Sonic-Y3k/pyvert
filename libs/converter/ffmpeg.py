@@ -435,7 +435,10 @@ class FFMpeg(object):
             idx = opts.index('-decoder')
             cmds.append(opts.pop(idx).replace('decoder','c:v'))
             cmds.append(opts.pop(idx))
-            
+        
+        if 'vaapi' in opts:
+            cmds.extend(['-vaapi_device', '/dev/dri/renderD128'])
+        
         if infile == self.DVD_CONCAT_FILE:
             cmds.extend(['-f', 'concat', '-safe', '0'])
         # Add duration and position flag before input when we can.
