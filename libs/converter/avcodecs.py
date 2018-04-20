@@ -655,24 +655,24 @@ class H264VaapiCodec(VideoCodec):
         optlist = []
         if 'qp' in safe:
             if 0 <= safe['qp'] <= 52:
-                optlist.extend(['-qp', safe['qp']])
+                optlist.extend(['-qp', str(safe['qp'])])
             else:
                 logger.error('Constant QP ({}) invalid. Reverting to default (20) ...'.format(safe['qp']))
-                optlist.extend(['-qp', 20])
+                optlist.extend(['-qp', '20'])
         if 'quality' in safe:
             if 0 <= safe['quality'] <= 8:
-                optlist.extend(['-quality', safe['quality']])
+                optlist.extend(['-quality', str(safe['quality'])])
             else:
                 logger.error('Encode quality invalid ({}). Reverting to default (0)...'.format(safe['quality']))
-                optlist.extend(['-quality', 0])
+                optlist.extend(['-quality', '0'])
         if 'low_power' in safe:
             if safe['low_power'] in [0, 1]:
-                optlist.extend(['-low_power', safe['low_power']])
+                optlist.extend(['-low_power', str(safe['low_power'])])
             else:
                 logger.error('Invalid low_power ({})'.format(safe['low_power']))
         if 'coder' in safe:
             if safe['coder'] in [0, 1]:
-                optlist.extend(['-coder', safe['coder']])
+                optlist.extend(['-coder', str(safe['coder'])])
             else:
                 logger.error('Invalid coder ({})'.format(safe['coder']))
         return optlist
@@ -694,14 +694,14 @@ class HevcVaapiCodec(VideoCodec):
         optlist = []
         if 'qp' in safe:
             if 0 <= safe['qp'] <= 52:
-                optlist.extend(['-qp', safe['qp']])
+                optlist.extend(['-qp', str(safe['qp'])])
             else:
                 logger.error('Constant QP ({}) invalid. Reverting to default (25) ...'.format(safe['qp']))
-                optlist.extend(['-qp', 25])
+                optlist.extend(['-qp', '25'])
                 
         if 'vprofile' in safe:
             if safe['vprofile'] in [2]:
-                optlist.extend(['-profile:v', safe['vprofile']])
+                optlist.extend(['-profile:v', str(safe['vprofile'])])
             else:
                 logger.error('Profile ({}) invalid.'.format(safe['vprofile']))
         return optlist
