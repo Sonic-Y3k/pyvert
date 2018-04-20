@@ -662,7 +662,7 @@ class H264VaapiCodec(VideoCodec):
                 optlist.extend(['-quality', safe['quality']])
             else:
                 logger.error('Encode quality invalid ({}). Reverting to default (0)...'.format(safe['quality']))
-                optlist.extend(['-quality', 0)
+                optlist.extend(['-quality', 0])
         if 'low_power' in safe:
             if safe['low_power'] in [0, 1]:
                 optlist.extend(['-low_power', safe['low_power']])
@@ -673,6 +673,7 @@ class H264VaapiCodec(VideoCodec):
                 optlist.extend(['-coder', safe['coder']])
             else:
                 logger.error('Invalid coder ({})'.format(safe['coder']))
+        return optlist
         
                 
 class HevcVaapiCodec(VideoCodec):
@@ -698,9 +699,10 @@ class HevcVaapiCodec(VideoCodec):
                 
         if 'profile' in safe:
             if safe['profile'] in [2]:
-                optlist.extend(['-profile', safe['profile'])
+                optlist.extend(['-profile', safe['profile']])
             else:
                 logger.error('Profile ({}) invalid.')
+        return optlist
               
 
 class H264NvencCodec(VideoCodec):

@@ -198,6 +198,9 @@ class QueueElement():
                 options['decoder'] = {'codec': vcodec+'_cuvid'}
         options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS
         
+        print(options)
+        exit(1)
+        
         for i in self.COBJECT.convert(infile, outfile, options):
             self.PERCENT = float(self.timecode_to_sec(i[2])/self.MEDIAINFO['format']['duration'])*100
         
