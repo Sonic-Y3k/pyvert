@@ -436,7 +436,7 @@ class FFMpeg(object):
             cmds.append(opts.pop(idx).replace('decoder','c:v'))
             cmds.append(opts.pop(idx))
         
-        if 'vaapi' in opts:
+        if 'hevc_vaapi' in opts or 'h264_vaapi' in opts:
             cmds.extend(['-vaapi_device', '/dev/dri/renderD128'])
         
         if infile == self.DVD_CONCAT_FILE:

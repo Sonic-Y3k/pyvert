@@ -440,10 +440,12 @@ class VideoCodec(BaseCodec):
             optlist.extend(['-vb', str(safe['bitrate']) + 'M'])
         if 'bufsize' in safe:
             optlist.extend(['-bufsize', str(safe['bufsize']) + 'k'])
-        if w and h:
-            optlist.extend(['-s', '{0}x{1}'.format(int(w), int(h))])
-            if 'aspect' in safe:
-                optlist.extend(['-aspect', '{0}:{1}'.format(int(w), int(h))])
+        
+        if 'vaapi' not in self.ffmpeg_codec_name:
+            if w and h:
+                optlist.extend(['-s', '{0}x{1}'.format(int(w), int(h))])
+                if 'aspect' in safe:
+                    optlist.extend(['-aspect', '{0}:{1}'.format(int(w), int(h))])
 
         if safe.get('crop'):
             optlist = self._extend_vf(optlist, 'crop={0}'.format(safe['crop']))
@@ -685,7 +687,7 @@ class HevcVaapiCodec(VideoCodec):
     encoder_options = VideoCodec.encoder_options.copy()
     encoder_options.update({
         'qp': int,
-        'profile': int,
+        'profile': str,
     })
     
     def _codec_specific_produce_ffmpeg_list(self, safe):
