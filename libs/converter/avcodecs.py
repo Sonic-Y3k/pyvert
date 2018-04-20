@@ -447,6 +447,12 @@ class VideoCodec(BaseCodec):
                 if 'aspect' in safe:
                     optlist.extend(['-aspect', '{0}:{1}'.format(int(w), int(h))])
 
+        else:
+            if 'tb' in safe:
+                optlist = self._extend_vf(optlist, 'format=p010,hwupload')
+            else:
+                optlist = self._extend_vf('format=nv12,hwupload')
+
         if safe.get('crop'):
             optlist = self._extend_vf(optlist, 'crop={0}'.format(safe['crop']))
 
@@ -687,7 +693,7 @@ class HevcVaapiCodec(VideoCodec):
     encoder_options = VideoCodec.encoder_options.copy()
     encoder_options.update({
         'qp': int,
-        'profile': str,
+        'vprofile': int,
     })
     
     def _codec_specific_produce_ffmpeg_list(self, safe):
@@ -699,11 +705,11 @@ class HevcVaapiCodec(VideoCodec):
                 logger.error('Constant QP ({}) invalid. Reverting to default (25) ...'.format(safe['qp']))
                 optlist.extend(['-qp', 25])
                 
-        if 'profile' in safe:
-            if safe['profile'] in [2]:
-                optlist.extend(['-profile', safe['profile']])
+        if 'vprofile' in safe:
+            if safe['vprofile'] in [2]:
+                optlist.extend(['-profile', safe['vprofile']])
             else:
-                logger.error('Profile ({}) invalid.')
+                logger.error('Profile ({}) invalid.'.format(safe['vprofile']))
         return optlist
               
 
