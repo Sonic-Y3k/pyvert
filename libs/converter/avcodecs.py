@@ -450,9 +450,6 @@ class VideoCodec(BaseCodec):
         if safe.get('crop'):
             optlist = self._extend_vf(optlist, 'crop={0}'.format(safe['crop']))
 
-        if 'vifi' in safe:
-            optlist = self._extend_vf(optlist, '{}'.format(safe['vifi']))
-
         if filters:
             optlist = self._extend_vf(filters)
 
