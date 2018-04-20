@@ -447,14 +447,11 @@ class VideoCodec(BaseCodec):
                 if 'aspect' in safe:
                     optlist.extend(['-aspect', '{0}:{1}'.format(int(w), int(h))])
 
-        else:
-            if 'tb' in safe:
-                optlist = self._extend_vf(optlist, 'format=p010,hwupload')
-            else:
-                optlist = self._extend_vf('format=nv12,hwupload')
-
         if safe.get('crop'):
             optlist = self._extend_vf(optlist, 'crop={0}'.format(safe['crop']))
+
+        if 'vifi' in safe:
+            optlist = self._extend_vf(optlist, '{}'.format(safe['vifi']))
 
         if filters:
             optlist = self._extend_vf(filters)
