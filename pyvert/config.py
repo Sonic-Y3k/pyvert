@@ -5,19 +5,16 @@ class Config():
     VALID_FILE_EXTENSIONS = ['.mkv']
     SCAN_DIRECTORY = '/Users/tschoenbach/Downloads/Test'
     OUTPUT_DIRECTORY = '/tmp/output'
-    VIDEO_CODEC = 'hevc_nvenc'
+    VIDEO_CODEC = 'hevc_vaapi'
     AUDIO_CODEC = 'copy'
     SUBTITLE_CODEC = 'copy'
     AUTOCROP = True
-    DECODER = 'cuvid'
+    DECODER = ''
     VIDEO_OPTIONS = {
-        'profile': 'main10',
-        'preset': 'slow',
-        'rc': 'vbr',
-        'rc-lookahead': 32,
-        'qmin': 15.0,
-        'qmax': 25.0,
-        'pix_fmt': 'yuv420p',
+        'aspect_filters': 'format=p010,hwupload',
+        'vprofile': 2,
+        'qp': 20.0,
+        'pix_fmt': 'vaapi_vld',
     }
     OUTPUT_FORMAT = 'mkv'
     AUDIO_OPTIONS = {}
@@ -28,7 +25,7 @@ class Config():
     HTTP_ENVIRONMENT = ''
     INTERFACE = 'default'
     MMQS = 4000  # max_muxing_queue_size
-    CONCURRENT_JOBS = 2
+    CONCURRENT_JOBS = 1
 
     def __init__(self):
         """

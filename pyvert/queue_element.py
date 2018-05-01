@@ -1,9 +1,14 @@
 import uuid
+import re
+import os
+from pathlib import Path
+from copy import copy
 from converter import Converter
 from converter.ffmpeg import FFMpegConvertError
 from os.path import join, basename
 from .helper import sizeof_fmt, seconds_hr
 from . import logger
+from pymediainfo import MediaInfo
 
 
 import pyvert
@@ -17,6 +22,8 @@ class QueueElement():
     UUID = None
     COBJECT = Converter()
     CROP = None
+    SPS = {}
+    SEI = {}
 
     def __init__(self, filename):
         """ Inits a QueueElement
@@ -41,12 +48,40 @@ class QueueElement():
         logger.debug(' - Duration: {}'.format(seconds_hr(
                      self.MEDIAINFO['format']['duration'])))
 
-        #if ('unknown' not in self.get_video_stream()['color_primaries']):
-        #    logger.debug(' - Has HDR: Yes')
-        #    self.HDR = True
-        #else:
-        #    logger.debug(' - Has HDR: No')
-        #    self.HDR = False
+        mi = MediaInfo.parse(filename)
+        # checking for sps
+        for t in mi.tracks:
+            if t.track_type == 'Video' and t.format == 'HEVC':
+                if hasattr(t, 'color_primaries') and hasattr(t, 'transfer_characteristics') and hasattr(t, 'matrix_coefficients'):
+                    logger.debug(' - Has SPS: Yes')
+                    self.SPS['colour_primaries'] = t.color_primaries
+                    self.SPS['transfer_characteristics'] = t.transfer_characteristics
+                    self.SPS['matrix_coeffs'] = t.matrix_coefficients
+                if hasattr(t, 'mastering_display_luminance') and hasattr(t, 'mastering_display_color_primaries'):
+                    logger.debug(' - Has SEI_0: Yes')
+                    mdl = re.findall('\d+.\d+', t.mastering_display_luminance)
+                    self.SEI['L'] = (float(mdl[0])*10000, int(mdl[1])*10000)
+                    
+                    if 'BT.709' in t.mastering_display_color_primaries:
+                        self.SEI['WP'] = (15635, 16450)
+                        self.SEI['G'] = (15000, 30000)
+                        self.SEI['B'] = (7500, 3000)
+                        self.SEI['R'] = (32000, 16450)
+                    elif 'BT.2020' in t.mastering_display_color_primaries:
+                        self.SEI['WP'] = (15635, 16450)
+                        self.SEI['G'] = (8500, 39850)
+                        self.SEI['B'] = (6550, 2300)
+                        self.SEI['R'] = (35400, 14600)
+                    elif 'P3' in t.mastering_display_color_primaries:
+                        self.SEI['WP'] = (15635, 16450)
+                        self.SEI['G'] = (13250, 34500)
+                        self.SEI['B'] = (7500, 3000)
+                        self.SEI['R'] = (34000, 16000)
+                if hasattr(t, 'maximum_content_light_level') and hasattr(t, 'maximum_frameaverage_light_level'):
+                    logger.debug(' - Has SEI_1: Yes')
+                    self.SEI['MDPC'] = re.findall('\d+', t.maximum_content_light_level)[0]
+                    self.SEI['MDL'] = re.findall('\d+', t.maximum_frameaverage_light_level)[0]
+            
 
         self.analyze()
         self.STATUS = 1
@@ -167,38 +202,54 @@ class QueueElement():
         """
         """
         infile = self.FULLPATH
+        vcodec = self.get_vcodec()
         options = {}
-        #if (self.HDR):
-        if False:
-            outfile = join(outdir, '{0}.{1}'.format(basename(infile), 'hevc'))
+        options['map'] = []
+        
+        # if we need to patch video stream for sps or sei packages
+        if self.SPS or self.SEI:
+            outfile = join(outdir, '{}.hevc'.format(self.UUID))
             options['format'] = 'hevc'
-            options['video'] = pyvert.CONFIG.VIDEO_OPTIONS
-            if pyvert.CONFIG.AUTOCROP:
-                options['video']['crop'] = self.CROP
-
-        else:
-            outfile = join(outdir, basename(infile))
-            options['format'] = pyvert.CONFIG.OUTPUT_FORMAT
-            options['video'] = pyvert.CONFIG.VIDEO_OPTIONS
-            options['video']['codec'] = pyvert.CONFIG.VIDEO_CODEC
-            if pyvert.CONFIG.AUTOCROP:
-                options['video']['crop'] = self.CROP
-            options['audio'] = pyvert.CONFIG.AUDIO_OPTIONS
-            options['audio']['codec'] = pyvert.CONFIG.AUDIO_CODEC
-            options['subtitle'] = pyvert.CONFIG.SUBTITLE_OPTIONS
-            options['subtitle']['codec'] = pyvert.CONFIG.SUBTITLE_CODEC
-            options['map'] = []
             for stream in self.MEDIAINFO['streams']:
-                if stream['codec_name'] not in' mjpeg':
+                if 'mjpeg' not in stream['codec_name'] and 'video' in stream['codec_type']:
+                    options['map'].append(int(stream['index']))
+                    continue
+        else:
+            outfile = join(outdir, '{}.{}'.format(self.UUID, pyvert.CONFIG.OUTPUT_FORMAT))
+            options['format'] = pyvert.CONFIG.OUTPUT_FORMAT
+            options['audio'] = copy(pyvert.CONFIG.AUDIO_OPTIONS)
+            options['subtitle'] = copy(pyvert.CONFIG.SUBTITLE_OPTIONS)
+            options['audio']['codec'] = pyvert.CONFIG.AUDIO_CODEC
+            options['subtitle']['codec'] = pyvert.CONFIG.SUBTITLE_CODEC
+            for stream in self.MEDIAINFO['streams']:
+                if 'mjpeg' not in stream['codec_name']:
                     options['map'].append(int(stream['index']))
 
-        vcodec = self.get_vcodec()
+        options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS            
+        options['video'] = copy(pyvert.CONFIG.VIDEO_OPTIONS)
+        if pyvert.CONFIG.AUTOCROP:
+            options['video']['crop'] = self.CROP
+        
+        
         if pyvert.CONFIG.DECODER in ['cuvid']:
             if vcodec in ['h264', 'hevc', 'vc1']:
                 options['decoder'] = {'codec': vcodec+'_cuvid'}
-        options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS
         
         for i in self.COBJECT.convert(infile, outfile, options):
             self.PERCENT = float(self.timecode_to_sec(i[2])/self.MEDIAINFO['format']['duration'])*100
         
+        # if sps or sei present, now it's time to patch and remux
+        if self.SPS or self.SEI:
+            """
+            """
+        else:
+            x = 0
+            while True:
+                fn = '{}{}.{}'.format(os.path.splitext(basename(infile))[0], x if x > 0 else '', pyvert.CONFIG.OUTPUT_FORMAT)
+                fp = join(outdir, fn)
+                if not Path(fp).exists():
+                    break
+                x += 1
+            
+            os.rename(outfile, fp)
         return True
