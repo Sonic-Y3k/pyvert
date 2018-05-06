@@ -91,7 +91,7 @@ class Queue():
         result = []
         with queue_lock:
             for index, element in enumerate(self.queue):
-                if element.STATUS == 2:
+                if 2 <= element.STATUS <= 4:
                     result.append(index)
         return result
 
@@ -190,28 +190,23 @@ class Queue():
                     self.active += 1
                     self.modify(idx, 'STATUS', 2)
                 element = self.get(idx)
-                element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY)
+                try:
+                    element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY)
+                except Exception as e:
+                    element.STATUS = 6
+                    logger.debug('Conversion failed with {}'.format(e))
+                    return
                 with queue_lock:
                     logger.debug('Setting ID #{} to finished'.format(idx))
                     self.active -= 1
-                    self.modify(idx, 'STATUS', 3)
-                    
-                # self.modify(idx, 'PERCENT', float(i))
-                #self.active += 5
-                #if element.HDR:
-                    #hoptions = {
-                    #    'MAXCLL': '1000,0',
-                    #    'COLORPRIM': 'bt2020',
-                    #    'TRANSFER': 'smpte-st-2084',
-                    #    'COLORMATRIX': 'bt2020nc',
-                    #    'CHROMALOC': 2,
-                    #    'VIDEOFORMAT': 'unspec',
-                    #    'FULL_RANGE': 'tv',
-                    #    'MASTERDP': 'G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)',
-                    #}
-                    #test = hdr.HdrPatcher('/mnt/Wastelands/Downloads/ToConvert/test.hevc', '/mnt/Wastelands/Downloads/ToConvert/out.hevc', hoptions)
-                    #test.process()
+                    self.modify(idx, 'STATUS', 5)
         
         for i in self.get_active_idx():
-            cutted_percent = "{0:.2f}".format(self.get(i).PERCENT)
-            logger.debug('[{}] Progress: {}%'.format(i, cutted_percent))
+            p = self.get(i)
+            if p.STATUS == 2:
+                cutted_percent = "{0:.2f}".format(p.PERCENT)
+                logger.debug('[{}] Progress: {}%'.format(i, cutted_percent))
+            elif p.STATUS == 3:
+                logger.debug('[{}] HDR Progress: {}%'.format(i, p.HPERCENT))
+            elif p.STATUS == 4:
+                logger.debug('[{}] Remux Progress: {}%'.format(i, p.MPERCENT))

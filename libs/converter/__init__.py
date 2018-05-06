@@ -144,6 +144,12 @@ class Converter(object):
                 for mi in m:
                     if type(mi) == int:
                         format_options.extend(['-map', '0:'+str(mi)])
+            elif type(m) == dict:
+                for mi in m:
+                    if type(mi) == int:
+                        for mj in m[mi]:
+                            if type(mj) == int:
+                                format_options.extend(['-map', '{}:{}'.format(mi,mj)])
             else:
                 raise ConverterError('map needs to be int or a list of int')
 
@@ -170,7 +176,7 @@ class Converter(object):
         elif twopass == 2:
             optlist.extend(['-pass', '2'])
 
-        return optlist
+        return optlist                
 
     def convert(self, infile, outfile, options, twopass=False, timeout=10, nice=None, title=None):
         """

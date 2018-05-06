@@ -9,7 +9,8 @@ from os.path import join, basename
 from .helper import sizeof_fmt, seconds_hr
 from . import logger
 from pymediainfo import MediaInfo
-
+from mkvmerge import MKVMerge
+from hevc_hdr_patcher import hdrpatcher
 
 import pyvert
 
@@ -18,6 +19,8 @@ class QueueElement():
     FULLPATH = None
     STATUS = None
     PERCENT = 0.0
+    HPERCENT = 0
+    MPERCENT = 0
     MEDIAINFO = None
     UUID = None
     COBJECT = Converter()
@@ -37,9 +40,11 @@ class QueueElement():
         """
         Status (0) = added
         Status (1) = scanned
-        Status (2) = processing
-        Status (3) = finished
-        Status (4) = failed
+        Status (2) = processing_ffmpeg
+        Status (3) = processing_hdrpatch
+        Status (4) = processing_merge
+        Status (5) = finished
+        Status (6) = failed
         """
         self.STATUS = 0
         self.MEDIAINFO = self.COBJECT.probe(filename, posters_as_video=False)
@@ -227,6 +232,8 @@ class QueueElement():
 
         options['max_muxing_queue_size'] = pyvert.CONFIG.MMQS            
         options['video'] = copy(pyvert.CONFIG.VIDEO_OPTIONS)
+        options['video']['codec'] = pyvert.CONFIG.VIDEO_CODEC
+        
         if pyvert.CONFIG.AUTOCROP:
             options['video']['crop'] = self.CROP
         
@@ -240,16 +247,35 @@ class QueueElement():
         
         # if sps or sei present, now it's time to patch and remux
         if self.SPS or self.SEI:
-            """
-            """
-        else:
-            x = 0
-            while True:
-                fn = '{}{}.{}'.format(os.path.splitext(basename(infile))[0], x if x > 0 else '', pyvert.CONFIG.OUTPUT_FORMAT)
-                fp = join(outdir, fn)
-                if not Path(fp).exists():
-                    break
-                x += 1
+            self.STATUS = 3
+            houtfile = join(outdir, '{}_p.hevc'.format(self.UUID))
             
-            os.rename(outfile, fp)
+            h = hdrpatcher(outfile)
+            h.patch(sei=self.SEI, sps=self.SPS)
+            for i in h.write(houtfile):
+                self.HPERCENT = i
+
+                
+            self.STATUS = 4
+            m = MKVMerge()
+            noutfile = join(outdir, '{}.{}'.format(self.UUID, pyvert.CONFIG.OUTPUT_FORMAT))
+            options = {houtfile: ['-A', '-S'], infile: ['-D']}
+            for i in m.merge([houtfile, infile], noutfile, options):
+                self.MPERCENT = i
+            
+            # remux successful, let's delete the temp file
+            os.remove(houtfile)
+            os.remove(outfile)
+            outfile = noutfile
+        
+        # rename uuid.mkv
+        x = 0
+        while True:
+            fn = '{}{}.{}'.format(os.path.splitext(basename(infile))[0], x if x > 0 else '', pyvert.CONFIG.OUTPUT_FORMAT)
+            fp = join(outdir, fn)
+            if not Path(fp).exists():
+                break
+            x += 1
+            
+        os.rename(outfile, fp)
         return True

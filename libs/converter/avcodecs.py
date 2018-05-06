@@ -463,7 +463,6 @@ class VideoCodec(BaseCodec):
         optlist.extend(self._codec_specific_produce_ffmpeg_list(safe))
         return optlist
 
-
 class AudioNullCodec(BaseCodec):
     """
     Null audio codec (no audio).
