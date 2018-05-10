@@ -10,8 +10,10 @@ class hdrpatcher(object):
     parsed_data = None
     gsei = ''
     
-    def __init__(self, infile):
+    def __init__(self):
         self.chunk = 8388608
+        
+    def load(self, infile):
         self.infile = infile
         self.F = open (self.infile,'r+b')
         self.s = BitStream(self.F.read(self.chunk))
@@ -28,7 +30,6 @@ class hdrpatcher(object):
         t.replace ('0x000003','0x0000',bytealigned=True)
         self.parsed_data = processSPS(t)
         t.replace ('0x0000','0x000003',bytealigned=True)
-        
     
     def close_streams(self):
         if self.F:
@@ -48,9 +49,10 @@ class hdrpatcher(object):
         md_sei_last_payload_size_byte = 4
         new_sei_string += pack ('2*uint:8',md_sei_last_payload_type_byte,md_sei_last_payload_size_byte)
         new_sei_string += pack ('uint:16',int(mdpc))
+        #new_sei_string +=  '0x'+hex(mdpc).split('x')[-1].zfill(4)
+        #new_sei_string +=  '0x'+hex(mdl).split('x')[-1].zfill(4)
         new_sei_string += pack ('uint:16',int(mdl))
-        new_sei_string.replace ('0x0000','0x000003',bytealigned=True)
-        new_sei_string = '0x00000001' + new_sei_string + '0x00'
+        new_sei_string = '0x00000001' + new_sei_string + '0x80'
         return new_sei_string
         
     def gen_mastering_display_info(self, md_arg_str):
@@ -126,6 +128,8 @@ class hdrpatcher(object):
             if sei:
                 """ Patch sei
                 """
+                if 'MDPC' in sei and 'MDL' in sei:
+                    self.gsei = self.gen_content_light_info(sei['MDPC'], sei['MDL'])
                 if 'G' in sei and 'B' in sei and 'R' in sei and 'WP' in sei and 'L' in sei:
                     sei_string = 'G({},{})B({},{})R({},{})WP({},{})L({},{})'.format(sei['G'][0], sei['G'][1],
                                                                                     sei['B'][0], sei['B'][1],
@@ -133,8 +137,6 @@ class hdrpatcher(object):
                                                                                     sei['WP'][0], sei['WP'][1],
                                                                                     sei['L'][0], sei['L'][1])
                     self.gsei += self.gen_mastering_display_info(sei_string)
-                if 'MDPC' in sei and 'MDL' in sei:
-                    self.gsei += self.gen_content_light_info(sei['MDPC'], sei['MDL'])
             if sps:
                 """ Patch sps
                 """

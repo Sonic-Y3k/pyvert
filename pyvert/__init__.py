@@ -33,7 +33,7 @@ def initialize_scheduler():
                      ' for updates', hours=12, minutes=0, seconds=0)
 
         schedule_job(QUEUE.scan, 'Scan files', hours=0, minutes=1,
-                     seconds=0, args=[CONFIG.SCAN_DIRECTORY])
+                     seconds=0, args=[CONFIG.SCAN_DIRECTORY], max_instances=2)
 
         schedule_job(QUEUE.worker, 'Process files', hours=0, minutes=0,
                      seconds=5, max_instances=CONFIG.CONCURRENT_JOBS+1)

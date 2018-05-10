@@ -19,6 +19,7 @@ class Queue():
         """
         self.queue = []
         self.ignore = []
+        self.scanning = False
         self.active = 0
 
     def gffd(self, directory, recursive=True):
@@ -99,6 +100,10 @@ class Queue():
         """ Scans directory for new files
         """
         #logger.debug('Starting scan in directory \'{}\''.format(directory))
+        if self.scanning:
+            return
+        
+        self.scanning = True
         filenames = self.gffd(directory)
         for temp_fullpath in filenames:
             try:
@@ -109,8 +114,9 @@ class Queue():
                     temp_file = None
                     logger.debug('Adding \'{0}\''.format(
                                  path.basename(temp_fullpath)))
-                    temp_file = queue_element.QueueElement(temp_fullpath)
+
                     with queue_lock:
+                        temp_file = queue_element.QueueElement(temp_fullpath)
                         self.queue.append(temp_file)
                         self.ignore.append(temp_fullpath)
             except FileNotFoundError as e:
@@ -121,6 +127,8 @@ class Queue():
                              'from \'{}\''.format(temp_fullpath))
             finally:
                 """"""
+        
+        self.scanning = False
         #logger.debug('Finishing scan in directory \'{}\''.format(
         #             directory))
 
@@ -194,6 +202,7 @@ class Queue():
                     element.convert(pyvert.CONFIG.OUTPUT_DIRECTORY)
                 except Exception as e:
                     element.STATUS = 6
+                    self.active -= 1
                     logger.debug('Conversion failed with {}'.format(e))
                     return
                 with queue_lock:

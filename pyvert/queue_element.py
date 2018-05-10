@@ -8,12 +8,23 @@ from converter.ffmpeg import FFMpegConvertError
 from os.path import join, basename
 from .helper import sizeof_fmt, seconds_hr
 from . import logger
-from pymediainfo import MediaInfo
 from mkvmerge import MKVMerge
 from hevc_hdr_patcher import hdrpatcher
+from pymediainfo import MediaInfo
 
 import pyvert
 
+class QueueConfig():
+    def __init__(self, sps, sei, config):
+        self.SPS = sps
+        self.SEI = sei
+        self.CONFIG = config
+        
+    def getc(self, name):
+        return getattr(self, name)
+        
+    def setc(self, name, value):
+        setattr(self, name, value)
 
 class QueueElement():
     FULLPATH = None
@@ -24,9 +35,8 @@ class QueueElement():
     MEDIAINFO = None
     UUID = None
     COBJECT = Converter()
+    HOBJECT = hdrpatcher()
     CROP = None
-    SPS = {}
-    SEI = {}
 
     def __init__(self, filename):
         """ Inits a QueueElement
@@ -53,19 +63,21 @@ class QueueElement():
         logger.debug(' - Duration: {}'.format(seconds_hr(
                      self.MEDIAINFO['format']['duration'])))
 
-        mi = MediaInfo.parse(filename)
+        self.MOBJECT = MediaInfo.parse(filename)
         # checking for sps
-        for t in mi.tracks:
+        for t in self.MOBJECT.tracks:
             if t.track_type == 'Video' and t.format == 'HEVC':
                 if hasattr(t, 'color_primaries') and hasattr(t, 'transfer_characteristics') and hasattr(t, 'matrix_coefficients'):
                     logger.debug(' - Has SPS: Yes')
+                    self.SPS = {}
                     self.SPS['colour_primaries'] = t.color_primaries
                     self.SPS['transfer_characteristics'] = t.transfer_characteristics
                     self.SPS['matrix_coeffs'] = t.matrix_coefficients
                 if hasattr(t, 'mastering_display_luminance') and hasattr(t, 'mastering_display_color_primaries'):
                     logger.debug(' - Has SEI_0: Yes')
+                    self.SEI = {}
                     mdl = re.findall('\d+.\d+', t.mastering_display_luminance)
-                    self.SEI['L'] = (float(mdl[0])*10000, int(mdl[1])*10000)
+                    self.SEI['L'] = (int(mdl[1])*10000, int(float(mdl[0])*10000))
                     
                     if 'BT.709' in t.mastering_display_color_primaries:
                         self.SEI['WP'] = (15635, 16450)
@@ -84,9 +96,8 @@ class QueueElement():
                         self.SEI['R'] = (34000, 16000)
                 if hasattr(t, 'maximum_content_light_level') and hasattr(t, 'maximum_frameaverage_light_level'):
                     logger.debug(' - Has SEI_1: Yes')
-                    self.SEI['MDPC'] = re.findall('\d+', t.maximum_content_light_level)[0]
-                    self.SEI['MDL'] = re.findall('\d+', t.maximum_frameaverage_light_level)[0]
-            
+                    self.SEI['MDPC'] = int(re.findall('\d+', t.maximum_content_light_level)[0])
+                    self.SEI['MDL'] = int(re.findall('\d+', t.maximum_frameaverage_light_level)[0])
 
         self.analyze()
         self.STATUS = 1
@@ -208,18 +219,22 @@ class QueueElement():
         """
         infile = self.FULLPATH
         vcodec = self.get_vcodec()
-        options = {}
+        options = {self.UUID: {}}
         options['map'] = []
         
+        
+        
         # if we need to patch video stream for sps or sei packages
-        if self.SPS or self.SEI:
+        if hasattr(self, 'SPS') or hasattr(self, 'SEI'):
+            logger.debug('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
             outfile = join(outdir, '{}.hevc'.format(self.UUID))
             options['format'] = 'hevc'
             for stream in self.MEDIAINFO['streams']:
                 if 'mjpeg' not in stream['codec_name'] and 'video' in stream['codec_type']:
                     options['map'].append(int(stream['index']))
-                    continue
+                    #continue
         else:
+            self.SPS = self.SEI = {}
             outfile = join(outdir, '{}.{}'.format(self.UUID, pyvert.CONFIG.OUTPUT_FORMAT))
             options['format'] = pyvert.CONFIG.OUTPUT_FORMAT
             options['audio'] = copy(pyvert.CONFIG.AUDIO_OPTIONS)
@@ -246,16 +261,17 @@ class QueueElement():
             self.PERCENT = float(self.timecode_to_sec(i[2])/self.MEDIAINFO['format']['duration'])*100
         
         # if sps or sei present, now it's time to patch and remux
-        if self.SPS or self.SEI:
+        if len(self.SPS) > 0 or len(self.SEI) > 0:
             self.STATUS = 3
             houtfile = join(outdir, '{}_p.hevc'.format(self.UUID))
             
-            h = hdrpatcher(outfile)
-            h.patch(sei=self.SEI, sps=self.SPS)
-            for i in h.write(houtfile):
+            
+            self.HOBJECT.load(outfile)
+            self.HOBJECT.patch(sei=self.SEI, sps=self.SPS)
+            for i in self.HOBJECT.write(houtfile):
                 self.HPERCENT = i
-
-                
+            self.HOBJECT.close_streams()
+            
             self.STATUS = 4
             m = MKVMerge()
             noutfile = join(outdir, '{}.{}'.format(self.UUID, pyvert.CONFIG.OUTPUT_FORMAT))
