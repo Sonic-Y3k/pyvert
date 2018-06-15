@@ -126,10 +126,11 @@ class MKVMerge(object):
 
         return True
     
-    def merge(self, infiles, outfile, opts, timeout=10, nice=None, get_output=False, title=None):
+    def merge(self, infiles, outfile, opts, hdr, timeout=10, nice=None, get_output=False, title=None):
         """
         """
         cmds = [self.mkvmerge_path, '-o', outfile]
+        cmds.extend(hdr)
         count = 0
         for i in infiles:
             if not os.path.exists(i) and not self.is_url(i):
@@ -139,7 +140,7 @@ class MKVMerge(object):
                 cmds += opts[i]
             
             cmds.append(i)
-                
+        
         return self._run_mkvmerge(cmds, timeout=timeout, nice=nice, get_output=get_output, title=title)
         
     def _run_mkvmerge(self, cmds, timeout=10, nice=None, get_output=False, title=None):

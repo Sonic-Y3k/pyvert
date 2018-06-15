@@ -3,7 +3,7 @@ from os import path, walk, stat
 from time import time
 import re
 import pyvert
-from pyvert import config, logger, queue_element, hdr
+from pyvert import config, logger, queue_element
 from json.decoder import JSONDecodeError
 
 queue_lock = RLock()
@@ -112,11 +112,11 @@ class Queue():
                    self.scan_output_directory(temp_fullpath) and \
                    self.scan_size(temp_fullpath):
                     temp_file = None
-                    logger.debug('Adding \'{0}\''.format(
-                                 path.basename(temp_fullpath)))
+                    #logger.debug('Adding \'{0}\''.format(
+                    #             path.basename(temp_fullpath)))
 
+                    temp_file = queue_element.QueueElement(temp_fullpath)
                     with queue_lock:
-                        temp_file = queue_element.QueueElement(temp_fullpath)
                         self.queue.append(temp_file)
                         self.ignore.append(temp_fullpath)
             except FileNotFoundError as e:

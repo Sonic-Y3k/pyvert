@@ -37,18 +37,20 @@ class processScalingListData(object):
 
     def bs(self):
         new_bs = BitStream()
-        for matrixId in range(2 if sizeId == 3 else 6):
-            new_bs += pack('uint:1', self.scaling_list_pred_mode_flag[sizeId][matrixId])
-            if not self.scaling_list_pred_mode_flag[sizeId][matrixId]:
-                new_bs += pack('ue', self.scaling_list_pred_matrix_id_delta[sizeId][matrixId])
-            else:
-                nextCoef = 8;
-                coefNum = min(64, pow(4,sizeId+2));
-                if sizeId > 1:
-                    new_bs += pack('ue', self.scaling_list_dc_coef_minus8[sizeId-2][matrixId])
+        
+        for sizeId in range(4):
+            for matrixId in range(2 if sizeId == 3 else 6):
+                new_bs += pack('uint:1', self.scaling_list_pred_mode_flag[sizeId][matrixId])
+                if not self.scaling_list_pred_mode_flag[sizeId][matrixId]:
+                    new_bs += pack('ue', self.scaling_list_pred_matrix_id_delta[sizeId][matrixId])
+                else:
+                    nextCoef = 8;
+                    coefNum = min(64, pow(4,sizeId+2));
+                    if sizeId > 1:
+                        new_bs += pack('ue', self.scaling_list_dc_coef_minus8[sizeId-2][matrixId])
 
-                for i in range(coefNum):
-                    new_bs += pack('ue', self.scaling_list_delta_coef[sizeId][matrixId][i])
+                    for i in range(coefNum):
+                        new_bs += pack('ue', self.scaling_list_delta_coef[sizeId][matrixId][i])
         return new_bs
             
 

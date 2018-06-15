@@ -69,21 +69,21 @@ class processShortTermRefPicSet(object):
             new_bs += pack('uint:1', self.inter_ref_pic_set_prediction_flag)
         
         if self.inter_ref_pic_set_prediction_flag:
-            if stRpsIdx == num_short_term_ref_pic_sets:
+            if self.stRpsIdx == self.num_short_term_ref_pic_sets:
                 new_bs += pack('ue', self.delta_idx_minus1)
             
             new_bs += pack('uint:1', self.delta_rps_sign)
             new_bs += pack('ue', self.abs_delta_rps_minus1)
             
-            RefRpsIdx = stRpsIdx - (self.delta_idx_minus1 + 1);
+            RefRpsIdx = self.stRpsIdx - (self.delta_idx_minus1 + 1);
             NumDeltaPocs = 0
             
-            if short_term_ref_pic_set[RefRpsIdx].inter_ref_pic_set_prediction_flag:
+            if self.short_term_ref_pic_set[RefRpsIdx].inter_ref_pic_set_prediction_flag:
                 for idx in range(len(short_term_ref_pic_set[RefRpsIdx].used_by_curr_pic_flag)):
                     if short_term_ref_pic_set[RefRpsIdx].used_by_curr_pic_flag[idx] or short_term_ref_pic_set[RefRpsIdx].use_delta_flag[idx]:
                         NumDeltaPocs += 1;
             else:
-                NumDeltaPocs = short_term_ref_pic_set[RefRpsIdx].num_negative_pics + short_term_ref_pic_set[RefRpsIdx].num_positive_pics;
+                NumDeltaPocs = self.short_term_ref_pic_set[RefRpsIdx].num_negative_pics + self.short_term_ref_pic_set[RefRpsIdx].num_positive_pics;
             
             for idx in range(NumDeltaPocs):
                 new_bs += pack('uint:1', self.used_by_curr_pic_flag[idx])

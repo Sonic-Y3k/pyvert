@@ -54,6 +54,8 @@ class processHrdParameters(object):
             if self.nal_hrd_parameters_present_flag:
                 self.nal_sub_layer_hrd_parameters[idx] = processSubLayerHrdParameters(s, self.sub_pic_hrd_params_present_flag, self.cpb_cnt_minus1[idx]);
             if self.vcl_hrd_parameters_present_flag:
+                if not hasattr(self, 'vcl_sub_layer_hrd_parameters'):
+                    self.vcl_sub_layer_hrd_parameters = {}
                 self.vcl_sub_layer_hrd_parameters[idx] = processSubLayerHrdParameters(s, self.sub_pic_hrd_params_present_flag, self.cpb_cnt_minus1[idx]);
     
     def bs(self):
